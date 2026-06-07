@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eye Reminder</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d1117;
+    --bg2:       #161b22;
+    --bg3:       #1c2128;
+    --teal:      #4FC5DE;
+    --teal-lo:   rgba(79,197,222,0.12);
+    --teal-glow: rgba(79,197,222,0.35);
+    --white:     #e6edf3;
+    --gray:      #8b949e;
+    --border:    #30363d;
+  }
+
+  html, body {
+    width: 320px; height: 468px;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 13px;
+    user-select: none;
+  }
+
+  /* ── HEADER ── */
+  header {
+    height: 52px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    flex-shrink: 0;
+  }
+
+  .brand { display: flex; align-items: center; gap: 8px; }
+
+  .brand-eye {
+    font-size: 20px;
+    line-height: 1;
+    filter: drop-shadow(0 0 6px var(--teal));
+  }
+
+  .brand-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.3px;
+  }
+
+  .badge {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--gray);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 9px;
+    letter-spacing: 0.4px;
+  }
+
+  /* ── BODY ── */
+  main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 20px 20px;
+    gap: 16px;
+    height: calc(468px - 52px);
+  }
+
+  /* ── RING ── */
+  .ring-wrap {
+    position: relative;
+    width: 190px; height: 190px;
+    flex-shrink: 0;
+  }
+
+  .ring-svg {
+    width: 190px; height: 190px;
+  }
+
+  #ring-canvas {
+    display: block;
+    width: 190px;
+    height: 190px;
+  }
+
+  .ring-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .ring-time {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -1.5px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .ring-label {
+    font-size: 10px;
+    color: var(--gray);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-top: 5px;
+  }
+
+  /* ── STATUS CHIP ── */
+  .status-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+    border: 1px solid transparent;
+  }
+
+  .status-chip.active {
+    background: var(--teal-lo);
+    color: var(--teal);
+    border-color: rgba(79,197,222,0.25);
+  }
+
+  .status-chip.idle {
+    background: rgba(139,148,158,0.1);
+    color: var(--gray);
+    border-color: rgba(139,148,158,0.2);
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .status-chip.active .status-dot {
+    animation: pulse-dot 1.8s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    width: 100%; height: 1px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  /* ── SETTINGS ROW ── */
+  .settings-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 0;
+  }
+
+  .settings-label { font-size: 12px; color: var(--gray); font-weight: 500; }
+
+  .toggle {
+    position: relative;
+    width: 36px; height: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .toggle-track {
+    position: absolute; inset: 0;
+    border-radius: 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .toggle.on .toggle-track { background: var(--teal); border-color: var(--teal); }
+
+  .toggle-thumb {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--gray);
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  .toggle.on .toggle-thumb { transform: translateX(16px); background: #fff; }
+
+  /* ── BUTTONS ── */
+  .btn-row { width: 100%; display: flex; gap: 10px; }
+
+  .btn {
+    flex: 1;
+    padding: 9px 0;
+    border-radius: 7px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.15s, color 0.15s, border-color 0.15s,
+                box-shadow 0.15s, transform 0.1s;
+    font-family: inherit;
+    text-align: center;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-teal {
+    background: transparent;
+    color: var(--teal);
+    border-color: rgba(79,197,222,0.4);
+  }
+
+  .btn-teal:hover {
+    background: var(--teal-lo);
+    border-color: var(--teal);
+    box-shadow: 0 0 12px var(--teal-glow);
+  }
+
+  .btn-gray {
+    background: transparent;
+    color: var(--gray);
+    border-color: var(--border);
+  }
+
+  .btn-gray:hover { background: var(--bg3); color: var(--white); border-color: #484f58; }
+
+  /* ── ENTRY ANIMATION ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  header       { animation: fadeUp 0.3s ease 0s both; }
+  .ring-wrap   { animation: fadeUp 0.35s ease 0.06s both; }
+  .status-chip { animation: fadeUp 0.35s ease 0.12s both; }
+  .divider     { animation: fadeUp 0.35s ease 0.16s both; }
+  .settings-row{ animation: fadeUp 0.35s ease 0.2s both; }
+  .btn-row     { animation: fadeUp 0.35s ease 0.24s both; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-eye">👁</span>
+    <span class="brand-name">Eye Reminder</span>
+  </div>
+  <span class="badge">20-20-20 · v1.4</span>
+</header>
+
+<main>
+  <div class="ring-wrap">
+    <canvas id="ring-canvas" width="190" height="190"></canvas>
+    <div class="ring-center">
+      <div class="ring-time" id="timer-text">20:00</div>
+      <div class="ring-label">until break</div>
+    </div>
+  </div>
+
+  <div class="status-chip active" id="status-chip">
+    <div class="status-dot"></div>
+    <span id="status-text">Active</span>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="settings-row">
+    <span class="settings-label">Start with Windows</span>
+    <div class="toggle" id="startup-toggle" onclick="handleToggle()">
+      <div class="toggle-track"></div>
+      <div class="toggle-thumb"></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="btn-row">
+    <button class="btn btn-teal" onclick="handleTest()">Test Overlay</button>
+    <button class="btn btn-gray" onclick="handleReset()">Reset Timer</button>
+  </div>
+</main>
+
+<script>
+  const canvas  = document.getElementById('ring-canvas');
+  const ctx     = canvas.getContext('2d');
+  const timerEl = document.getElementById('timer-text');
+  const chipEl  = document.getElementById('status-chip');
+  const statusEl= document.getElementById('status-text');
+  const toggleEl= document.getElementById('startup-toggle');
+
+  let currentStartup = false;
+
+  function fmt(secs) {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = Math.floor(secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  const CX = 95, CY = 95, R = 82, START = -Math.PI / 2;
+
+  function updateRing(fraction) {
+    ctx.clearRect(0, 0, 190, 190);
+
+    // Track
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(CX, CY, R, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#1c2128';
+    ctx.lineWidth = 11;
+    ctx.stroke();
+    ctx.restore();
+
+    const f = Math.max(0, Math.min(1, fraction));
+    if (f <= 0) return;
+
+    const end = START + f * 2 * Math.PI;
+
+    // Progress arc — clockwise from 12 o'clock
+    ctx.save();
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = 'rgba(79,197,222,0.6)';
+    ctx.beginPath();
+    ctx.arc(CX, CY, R, START, end, false);
+    ctx.strokeStyle = '#4FC5DE';
+    ctx.lineWidth = 11;
+    ctx.lineCap = 'butt';
+    ctx.stroke();
+    ctx.restore();
+
+    // Static cap at 12 o'clock (arc start)
+    ctx.save();
+    ctx.shadowBlur = 6;
+    ctx.shadowColor = 'rgba(79,197,222,0.6)';
+    ctx.beginPath();
+    ctx.arc(CX, CY - R, 5.5, 0, 2 * Math.PI);
+    ctx.fillStyle = '#4FC5DE';
+    ctx.fill();
+    ctx.restore();
+
+    if (f >= 1) return;
+
+    // Tracking dot at arc tip
+    const dotX = CX + R * Math.cos(end);
+    const dotY = CY + R * Math.sin(end);
+    ctx.save();
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = 'rgba(79,197,222,1.0)';
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, 7, 0, 2 * Math.PI);
+    ctx.fillStyle = '#0d1117';
+    ctx.fill();
+    ctx.strokeStyle = '#4FC5DE';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function applyStatus(data) {
+    const { remaining_secs, total_secs, paused, startup_enabled } = data;
+    timerEl.textContent = fmt(remaining_secs);
+    const fraction = 1 - (remaining_secs / total_secs);
+    updateRing(fraction);
+    chipEl.className = paused ? 'status-chip idle' : 'status-chip active';
+    statusEl.textContent = paused ? 'Idle — paused' : 'Active';
+    currentStartup = startup_enabled;
+    toggleEl.classList.toggle('on', startup_enabled);
+  }
+
+  function poll() {
+    window.eyeApi.getStatus().then(applyStatus).catch(() => {});
+  }
+
+  function handleToggle() {
+    window.eyeApi.setStartup(!currentStartup).then(poll);
+  }
+
+  function handleTest() {
+    window.eyeApi.testOverlay();
+  }
+
+  function handleReset() {
+    window.eyeApi.reset().then(poll);
+  }
+
+  // eyeApi is available synchronously via contextBridge
+  poll();
+  setInterval(poll, 1000);
+</script>
+</body>
+</html>

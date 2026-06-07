@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 300px; height: 168px;
+    background: transparent;
+    overflow: hidden;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .card {
+    width: 300px; height: 168px;
+    background: rgba(13, 17, 23, 0.94);
+    border: 1px solid #30363d;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(79,197,222,0.08);
+    animation: slideIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #e6edf3;
+    letter-spacing: 0.2px;
+  }
+
+  .eye-btn {
+    font-size: 38px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.15s;
+    animation: eyePulse 1.4s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px rgba(79,197,222,0.6));
+  }
+
+  .eye-btn:hover { transform: scale(1.12); }
+  .eye-btn.started { animation: none; cursor: default; filter: none; }
+
+  @keyframes eyePulse {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(79,197,222,0.5)); }
+    50%       { filter: drop-shadow(0 0 14px rgba(79,197,222,0.9)); }
+  }
+
+  .sub {
+    font-size: 11px;
+    color: #8b949e;
+    letter-spacing: 0.1px;
+    min-height: 16px;
+    text-align: center;
+  }
+
+  .sub.counting { color: #4FC5DE; font-weight: 600; }
+
+  /* Progress bar at bottom */
+  .bar-track {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: #1c2128;
+    border-radius: 0 0 14px 14px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #4FC5DE, #7ee8f4);
+    transition: width 1s linear;
+    border-radius: 0 0 14px 14px;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="title" id="title-text">Time for an eye break!</div>
+  <div class="eye-btn" id="eye" onclick="startBreak()">👁</div>
+  <div class="sub" id="sub-text">Click the eye to start</div>
+  <div class="bar-track"><div class="bar-fill" id="bar"></div></div>
+</div>
+
+<script>
+  const BREAK_SECS = 20;
+  let started = false;
+  let remaining = BREAK_SECS;
+  let tickHandle = null;
+
+  function startBreak() {
+    if (started) return;
+    started = true;
+
+    const eye = document.getElementById('eye');
+    const sub = document.getElementById('sub-text');
+    const title = document.getElementById('title-text');
+    const bar = document.getElementById('bar');
+
+    eye.classList.add('started');
+    title.textContent = 'Look away now 👀';
+    sub.className = 'sub counting';
+    sub.textContent = `Looking away… ${BREAK_SECS}s`;
+
+    // Trigger bar animation after one frame so transition fires
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { bar.style.width = '100%'; });
+    });
+
+    tickHandle = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(tickHandle);
+        sub.textContent = 'Great job! ✨';
+        setTimeout(() => {
+          if (window.eyeApi) window.eyeApi.closeOverlay();
+        }, 800);
+        return;
+      }
+      sub.textContent = `Looking away… ${remaining}s`;
+    }, 1000);
+  }
+</script>
+</body>
+</html>
