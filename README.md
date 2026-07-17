@@ -15,6 +15,12 @@
   <img src="https://img.shields.io/badge/version-1.4-4FC5DE" alt="v1.4">
 </p>
 
+<p align="center">
+  <img src="assets/main-window.png" alt="Main window with countdown ring" width="280">
+  &nbsp;&nbsp;
+  <img src="assets/overlay.png" alt="Break overlay" width="280">
+</p>
+
 ## Why it's not just another timer
 
 Most break reminders count wall-clock time, so they interrupt you 5 minutes after you get back from lunch. Eye Reminder counts **active use only**: it polls the system idle time every second and pauses itself whenever you've been away from the keyboard and mouse for 60 seconds. Twenty minutes on the ring means twenty minutes of actual strain on your eyes.
